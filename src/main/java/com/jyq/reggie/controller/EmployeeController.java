@@ -12,6 +12,8 @@ import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDateTime;
 
 @Slf4j
 @RestController
@@ -46,6 +48,12 @@ public class EmployeeController {
         return R.success(pageInfo);
     }
 
+    /**
+     * 员工登录
+     * @param request
+     * @param employee
+     * @return
+     */
     @PostMapping("/login")
      public R<Employee> login(HttpServletRequest request,@RequestBody Employee employee){
         log.info("登录账户");
@@ -72,6 +80,12 @@ public class EmployeeController {
         request.getSession().setAttribute("employee",emp.getId());
         return R.success(emp);
      }
+
+    /**
+     * 登出
+     * @param request
+     * @return
+     */
      @PostMapping("/logout")
      public R<String> logout(HttpServletRequest request){
         log.info("账户退出");
@@ -79,6 +93,58 @@ public class EmployeeController {
          request.getSession().removeAttribute("employee");
         return R.success("退出成功！");
      }
+
+    /**
+     * 新增员工
+     * @param request
+     * @param employee
+     * @return
+     */
+    @PostMapping
+    public R<String> save(HttpServletRequest request,@RequestBody Employee employee){
+        log.info("新增员工：employee={}",employee.toString());
+        employee.setPassword(DigestUtils.md5DigestAsHex("123456".getBytes()));
+        //将密码进行加密
+        employee.setCreateUser((Long) request.getSession().getAttribute("employee"));
+        employee.setCreateTime(LocalDateTime.now());
+        employee.setUpdateUser((Long) request.getSession().getAttribute("employee"));
+        employee.setUpdateTime(LocalDateTime.now());
+        //设置公共字段
+        employeeService.save(employee);
+        return R.success("新增用户成功");
+    }
+
+    /**
+     * 根据员工id查询员工信息并回显
+     * @param id
+     * @return
+     */
+    @GetMapping("/{id}")
+    public R<Employee> getById(@PathVariable Long id){
+        log.info("根据id查询员工信息....");
+        Employee employee = employeeService.getById(id);
+        if(employee!=null){
+            return R.success(employee);
+        }
+        return R.error("没有查询到员工信息");
+    }
+
+    /**
+     * 修改员工信息
+     * @param request
+     * @param employee
+     * @return
+     */
+    @PutMapping
+    public R<String> update(HttpServletRequest request,@RequestBody Employee employee){
+        log.info(employee.toString());
+        Long emId = (Long) request.getSession().getAttribute("employee");
+        employee.setUpdateUser(emId);
+        employee.setUpdateTime(LocalDateTime.now());
+        employeeService.updateById(employee);
+        return R.success("信息修改成功");
+    }
+
 
 
 
