@@ -32,20 +32,22 @@ public class EmployeeController {
      */
     @GetMapping("/page")
     public R<Page> page(int page,int pageSize,String name){
-        //控制台输出日志
-        log.info("执行分页查询:page={},pageSize={},name={}",page,pageSize,name);
+        log.info("page = {},pageSize = {},name = {}",page,pageSize,name);
+
         //构造分页构造器
         Page pageInfo=new Page(page,pageSize);
-        //构造条件过滤器
+        //构造条件构造器
         LambdaQueryWrapper<Employee> queryWrapper=new LambdaQueryWrapper();
-        //添加过滤条件,这里使用like作为模糊查询
+        //添加过滤条件
         queryWrapper.like(StringUtils.isNotEmpty(name),Employee::getUsername,name);
         //添加排序条件
         queryWrapper.orderByDesc(Employee::getUpdateTime);
+
         //执行查询
         employeeService.page(pageInfo,queryWrapper);
 
         return R.success(pageInfo);
+
     }
 
     /**
@@ -103,6 +105,13 @@ public class EmployeeController {
     @PostMapping
     public R<String> save(HttpServletRequest request,@RequestBody Employee employee){
         log.info("新增员工：employee={}",employee.toString());
+
+        /*LambdaQueryWrapper<Employee> queryWrapper=new LambdaQueryWrapper<>();
+        queryWrapper.eq(Employee::getUsername,employee.getUsername());
+        if(employeeService.getOne(queryWrapper)!=null){
+            return R.error("用户名重复");
+        }*/
+
         employee.setPassword(DigestUtils.md5DigestAsHex("123456".getBytes()));
         //将密码进行加密
         employee.setCreateUser((Long) request.getSession().getAttribute("employee"));
@@ -114,20 +123,6 @@ public class EmployeeController {
         return R.success("新增用户成功");
     }
 
-    /**
-     * 根据员工id查询员工信息并回显
-     * @param id
-     * @return
-     */
-    @GetMapping("/{id}")
-    public R<Employee> getById(@PathVariable Long id){
-        log.info("根据id查询员工信息....");
-        Employee employee = employeeService.getById(id);
-        if(employee!=null){
-            return R.success(employee);
-        }
-        return R.error("没有查询到员工信息");
-    }
 
     /**
      * 修改员工信息
@@ -145,7 +140,19 @@ public class EmployeeController {
         return R.success("信息修改成功");
     }
 
-
-
+    /**
+     * 根据员工id查询员工信息并回显
+     * @param id
+     * @return
+     */
+    @GetMapping("/{id}")
+    public R<Employee> getById(@PathVariable Long id){
+        log.info("根据id查询员工信息....");
+        Employee employee = employeeService.getById(id);
+        if(employee!=null){
+            return R.success(employee);
+        }
+        return R.error("没有查询到员工信息");
+    }
 
 }
