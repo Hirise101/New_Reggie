@@ -72,4 +72,6 @@ public class CategoryController {
         categoryService.removeById(ids);
         return R.success("删除成功");
     }
+
+
 }
